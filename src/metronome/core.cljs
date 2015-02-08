@@ -7,7 +7,7 @@
 (def ctx (js/AudioContext.))
 
 (def DEFAULT_TEMPO 60)
-(def DURATION_OF_TICK .1)
+(def DURATION_OF_TICK .05)
 (def app-state (atom {:tempo DEFAULT_TEMPO :osc nil :intervalId nil}))
 
 (defn
@@ -54,13 +54,33 @@
   (fn [app owner]
     (om/component
     	(dom/div #js {:className "main"}
-        (dom/button #js {:onClick increaseTempo} "^")
-        (dom/button #js {:onClick decreaseTempo} "V") 
-        (:tempo app)
-        (dom/div nil 
-          (dom/button #js {:onClick startCounting} "Play")
-          (dom/button #js {:onClick stopCounting} "Stop")
-        )
+        	(dom/div #js {:className "row tempo"} 
+                (:tempo app)
+            )
+			(dom/div #js {:className "row"} 
+     			(dom/button 
+           			#js {:onClick (fn []
+	                            (stopCounting)
+	                            (increaseTempo)
+	                            (startCounting)  
+	                          )
+	            		} 
+	        		"+"
+          		)
+	        	(dom/button 
+           			#js {:onClick (fn []
+	                            (stopCounting)
+	                            (decreaseTempo)
+	                            (startCounting)  
+	                          )
+	            		} 
+	        		"\u2212"
+          		)
+          	) 
+	        (dom/div #js {:className "row"} 
+	          (dom/button #js {:onClick startCounting} "Play")
+	          (dom/button #js {:onClick stopCounting} "Stop")
+	        )
       )
     )
   )
