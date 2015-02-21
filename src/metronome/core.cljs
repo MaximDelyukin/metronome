@@ -7,61 +7,45 @@
 (def ctx (js/AudioContext.))
 
 (def DEFAULT_TEMPO 110)
-(def app-state (atom {:tempo DEFAULT_TEMPO :osc nil :intervalId nil :isCurrentlyTicking false}))
+(def app-state (atom {:tempo DEFAULT_TEMPO :osc nil :isCurrentlyTicking false}))
 
-(defn
-	increaseTempo 
+(defn increaseTempo 
  	[]
-	(swap! app-state assoc :tempo (+ 1 (get @app-state :tempo))))
-
-(defn 
-  decreaseTempo
-  []
-  (swap! app-state assoc :tempo (- (get @app-state :tempo) 1)))
-
-(def DURATION_OF_TICK .05)
-(defn 
-  playSingleTick
-  []
-  (if (get @app-state :osc)
-    (.disconnect (get @app-state :osc));to refactor
-  )
-  (swap! app-state assoc :osc (.createOscillator ctx))
-  (def osc (get @app-state :osc))
-  (.connect osc (.-destination ctx))
-  (.start osc)
-  (.stop osc (+ DURATION_OF_TICK (.-currentTime ctx)))
+	(swap! app-state assoc :tempo (+ 1 (get @app-state :tempo)))
 )
 
+(defn decreaseTempo
+	[]
+	(swap! app-state assoc :tempo (- (get @app-state :tempo) 1)))
+
+(def DURATION_OF_TICK_IN_SECONDS .05)
 (def SECONDS_IN_MINUTE 60)
-(defn 
-  calculateIntervalBasedOnTempoValue
-  []
-  (/ SECONDS_IN_MINUTE (get @app-state :tempo))
-)
 
 (defn calculateIntervalBetweenTicks
 	[]
-	(- (calculateIntervalBasedOnTempoValue) DURATION_OF_TICK)
+	(- (/ SECONDS_IN_MINUTE (get @app-state :tempo)) DURATION_OF_TICK_IN_SECONDS)
 )
 
-(defn 
-  isCurrentlyTicking
-  []
-  (get @app-state :isCurrentlyTicking)
+(defn isCurrentlyTicking
+	[]
+	(get @app-state :isCurrentlyTicking)
 )
 
-(defn 
-  setCurrentlyTicking
-  []
-  (swap! app-state assoc :isCurrentlyTicking true)
+(defn setCurrentlyTicking
+	[]
+	(swap! app-state assoc :isCurrentlyTicking true)
+)
+
+(defn setCurrentlyNotTicking
+	[]
+	(swap! app-state assoc :isCurrentlyTicking false)
 )
 
 (defn whenToPlay
 	[]
  	(if (isCurrentlyTicking)
     	(calculateIntervalBetweenTicks)
-    	0
+    	.04;for some reason firefox chunks the start of the sound if there is no delay
     )	
 )
 
@@ -76,35 +60,29 @@
  	(def currTime (.-currentTime ctx))
   	(set! (.-onended osc) playLoop)
 	(.start osc (+ currTime (whenToPlay)))
-	(.stop osc (+ currTime (whenToPlay) DURATION_OF_TICK))
-) 
-
-(defn 
-  setCurrentlyNotTicking
-  []
-  (swap! app-state assoc :isCurrentlyTicking false)
+	(.stop osc (+ currTime (whenToPlay) DURATION_OF_TICK_IN_SECONDS))
 )
 
-(defn 
-  startCounting
-  []
-  (playLoop)
-  (setCurrentlyTicking)
+(defn startCounting
+	[]
+	(playLoop)
+	(setCurrentlyTicking)
 )
 
-(defn 
-  stopCounting
-  []
-  (js/clearInterval (get @app-state :intervalId))
-  (setCurrentlyNotTicking)
+(defn stopCounting
+	[]
+ 	(set! (.-onended osc) nil)
+	(.stop (get @app-state :osc))
+	(.disconnect (get @app-state :osc))
+	(setCurrentlyNotTicking)
 )
 
-(defn
-	playStopButtonClickHandler
+(defn playStopButtonClickHandler
  	[]
   	(if (isCurrentlyTicking)
      	(stopCounting)
-     	(startCounting))
+     	(startCounting)
+    )
 )
 
 (defn
@@ -154,8 +132,8 @@
 	        	(dom/button 
             		#js {:onClick playStopButtonClickHandler}
               		(if (isCurrentlyTicking)
-                  		"Stop"
-                    	"Play") 
+                  		"\u25a0"
+                    	"\u25ba") 
             	)
 	        )
     	)
