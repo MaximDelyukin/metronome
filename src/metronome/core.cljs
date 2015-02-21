@@ -33,11 +33,16 @@
   (.stop osc (+ DURATION_OF_TICK (.-currentTime ctx)))
 )
 
-(def MILLISECONDS_IN_MINUTE 60000)
+(def SECONDS_IN_MINUTE 60)
 (defn 
   calculateIntervalBasedOnTempoValue
   []
-  (/ MILLISECONDS_IN_MINUTE (get @app-state :tempo))
+  (/ SECONDS_IN_MINUTE (get @app-state :tempo))
+)
+
+(defn calculateIntervalBetweenTicks
+	[]
+	(- (calculateIntervalBasedOnTempoValue) DURATION_OF_TICK)
 )
 
 (defn 
@@ -52,6 +57,28 @@
   (swap! app-state assoc :isCurrentlyTicking true)
 )
 
+(defn whenToPlay
+	[]
+ 	(if (isCurrentlyTicking)
+    	(calculateIntervalBetweenTicks)
+    	0
+    )	
+)
+
+(defn playLoop
+	[]
+	(if (get @app-state :osc)
+    	(.disconnect (get @app-state :osc))
+	)
+	(swap! app-state assoc :osc (.createOscillator ctx))
+	(def osc (get @app-state :osc))
+	(.connect osc (.-destination ctx))
+ 	(def currTime (.-currentTime ctx))
+  	(set! (.-onended osc) playLoop)
+	(.start osc (+ currTime (whenToPlay)))
+	(.stop osc (+ currTime (whenToPlay) DURATION_OF_TICK))
+) 
+
 (defn 
   setCurrentlyNotTicking
   []
@@ -61,9 +88,7 @@
 (defn 
   startCounting
   []
-  (playSingleTick)
-  (swap! app-state 
-        assoc :intervalId (js/setInterval playSingleTick (calculateIntervalBasedOnTempoValue)))
+  (playLoop)
   (setCurrentlyTicking)
 )
 
