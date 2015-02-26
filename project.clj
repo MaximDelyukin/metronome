@@ -33,7 +33,7 @@
               :source-paths ["src"]
               :compiler {:output-to "resources/public/js/compiled/metronome.js"
                          :main metronome.core                         
-                         :optimizations :advanced
+                         :optimizations :whitespace
                          :pretty-print false}}]}
 
   :figwheel {

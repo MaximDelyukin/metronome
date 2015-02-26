@@ -1,4 +1,4 @@
-(ns ^:figwheel-always metronome.core
+(ns metronome.core
     (:require[om.core :as om :include-macros true]
               [om.dom :as dom :include-macros true]))
 
@@ -125,15 +125,15 @@
           		)
 	        	(dom/button 
            			#js {:onClick decreaseTempoButtonClickHandler} 
-	        		"\u2212"
+	        		"-"
           		)
           	) 
 	        (dom/div #js {:className "row"} 
 	        	(dom/button 
             		#js {:onClick playStopButtonClickHandler}
               		(if (isCurrentlyTicking)
-                  		"\u25a0"
-                    	"\u25ba") 
+                  		"Stop"
+                    	"Play") 
             	)
 	        )
     	)
