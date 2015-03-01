@@ -6,7 +6,7 @@
 
 (def ctx (js/AudioContext.))
 
-(def DEFAULT_TEMPO 110)
+(def DEFAULT_TEMPO 60)
 (def app-state (atom {:tempo DEFAULT_TEMPO :osc nil :isCurrentlyTicking false}))
 
 (defn increaseTempo 
@@ -45,7 +45,7 @@
 	[]
  	(if (isCurrentlyTicking)
     	(calculateIntervalBetweenTicks)
-    	.04;for some reason firefox chunks the start of the sound if there is no delay
+    	0;for some reason firefox chunks the start of the sound if there is no delay
     )	
 )
 
@@ -79,10 +79,10 @@
 
 (defn playStopButtonClickHandler
  	[]
-  	(if (isCurrentlyTicking)
-     	(stopCounting)
-     	(startCounting)
-    )
+  (if (isCurrentlyTicking)
+    (stopCounting)
+    (startCounting)
+  )
 )
 
 (defn
@@ -90,8 +90,8 @@
 	[]
  	(if (isCurrentlyTicking)
     	(
-      		(stopCounting)
-      		(increaseTempo)
+      	(stopCounting)
+      	(increaseTempo)
     		(startCounting)
      	)
      	(increaseTempo)
@@ -103,18 +103,27 @@
   	[]
   	(if (isCurrentlyTicking)
     	(
-			(stopCounting)
-	        (decreaseTempo)
-	        (startCounting)    		
-      	)
+			  (stopCounting)
+	      (decreaseTempo)
+	      (startCounting)    		
+      )
     	(decreaseTempo) 
     )
+)
+
+(defn
+  mouseWheelHandler
+  [e]
+  (if (> 0 (.-wheelDelta (.-nativeEvent e)))
+    (decreaseTempo)
+    (increaseTempo)
+  )
 )
 
 (om/root
   (fn [app owner]
     (om/component
-    	(dom/div #js {:className "main"}
+    	(dom/div #js {:className "main" :onWheel mouseWheelHandler}
         	(dom/div #js {:className "row tempo"} 
                 (:tempo app)
             )
@@ -141,5 +150,3 @@
   )
   app-state
   {:target (. js/document (getElementById "app"))})
-
-
