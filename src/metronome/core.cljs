@@ -1,3 +1,4 @@
+;TODO: use input type with min and max attributes from MIN_TEMPO to MAX_TEMPO or some range macro or proxy
 (ns metronome.core
     (:require[om.core :as om :include-macros true]
               [om.dom :as dom :include-macros true]))
@@ -6,7 +7,9 @@
 
 (def ctx (js/AudioContext.))
 
-(def DEFAULT_TEMPO 60)
+(def DEFAULT_TEMPO 90)
+(def MAX_TEMPO 250)
+(def MIN_TEMPO 1)
 (def app-state (atom {:tempo DEFAULT_TEMPO :osc nil :isCurrentlyTicking false}))
 
 (defn increaseTempo 
@@ -18,7 +21,7 @@
 	[]
 	(swap! app-state assoc :tempo (- (get @app-state :tempo) 1)))
 
-(def DURATION_OF_TICK_IN_SECONDS .05)
+(def DURATION_OF_TICK_IN_SECONDS .025)
 (def SECONDS_IN_MINUTE 60)
 
 (defn calculateIntervalBetweenTicks
@@ -88,35 +91,43 @@
 (defn
 	inCreaseTempoButtonClickHandler 
 	[]
- 	(if (isCurrentlyTicking)
-    	(
-      	(stopCounting)
-      	(increaseTempo)
-    		(startCounting)
-     	)
-     	(increaseTempo)
-    )
+  (if (> MAX_TEMPO (get @app-state :tempo))
+    (increaseTempo)
+  )
 )
 
 (defn
  	decreaseTempoButtonClickHandler
-  	[]
-  	(if (isCurrentlyTicking)
-    	(
-			  (stopCounting)
-	      (decreaseTempo)
-	      (startCounting)    		
-      )
-    	(decreaseTempo) 
-    )
+  []
+  (if (< MIN_TEMPO (get @app-state :tempo))
+    (decreaseTempo)
+  )
 )
 
 (defn
   mouseWheelHandler
   [e]
+  (def tempo (get @app-state :tempo))
   (if (> 0 (.-wheelDelta (.-nativeEvent e)))
-    (decreaseTempo)
-    (increaseTempo)
+    (if (< MIN_TEMPO tempo)
+      (decreaseTempo)
+    )
+    (if (> MAX_TEMPO tempo)
+      (increaseTempo)
+    )
+  )
+)
+
+(defn onInputHandler
+  [e]
+  (def value (.-value (.-target (.-nativeEvent e))))
+  (.log js/console value)
+  (if (and (< MIN_TEMPO value) (> MAX_TEMPO value))
+    (swap! app-state assoc :tempo value)
+    (if (< MIN_TEMPO value)
+       (swap! app-state assoc :tempo MAX_TEMPO)
+       (swap! app-state assoc :tempo MIN_TEMPO)    
+    )
   )
 )
 
@@ -124,9 +135,9 @@
   (fn [app owner]
     (om/component
     	(dom/div #js {:className "main" :onWheel mouseWheelHandler}
-        	(dom/div #js {:className "row tempo"} 
-                (:tempo app)
-            )
+        	(dom/div #js {:className "row"} 
+            (dom/input #js {:value (:tempo app) :type "text" :className "tempo" :onInput onInputHandler})
+          )
 			(dom/div #js {:className "row"} 
      			(dom/button 
            			#js {:onClick inCreaseTempoButtonClickHandler} 

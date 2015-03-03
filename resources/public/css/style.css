@@ -1,7 +1,7 @@
 * {margin:0; padding:0}
 button {padding: 1em}
 .main {margin: auto; text-align: center;}
-.row {padding-top: 1em;}
-.tempo {font-size: 2em;}
+.row {padding-top: 1em; text-align: center;}
+.tempo {font-size: 1.9em; width: 2em; text-align: center; border: none;}
 
 
