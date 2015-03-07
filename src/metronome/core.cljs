@@ -26,7 +26,7 @@
 	(swap! app-state assoc :tempo (- (get @app-state :tempo) 1)))
 
 (def DURATION_OF_TICK_IN_SECONDS .025)
-(def SECONDS_IN_MINUTE 90)
+(def SECONDS_IN_MINUTE 60)
 
 (defn calculateIntervalBetweenTicks
 	[]
