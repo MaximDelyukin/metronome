@@ -1,4 +1,3 @@
-;TODO: use input type with min and max attributes from MIN_TEMPO to MAX_TEMPO or some range macro or proxy
 (ns metronome.core
     (:require[om.core :as om :include-macros true]
               [om.dom :as dom :include-macros true]))
@@ -27,9 +26,8 @@
 
 (def DURATION_OF_TICK_IN_SECONDS .025)
 (def SECONDS_IN_MINUTE 60)
-
 (defn calculateIntervalBetweenTicks
-	[]
+  []
 	(- (/ SECONDS_IN_MINUTE (get @app-state :tempo)) DURATION_OF_TICK_IN_SECONDS)
 )
 
@@ -51,15 +49,15 @@
 (defn whenToPlay
 	[]
  	(if (isCurrentlyTicking)
-    	(calculateIntervalBetweenTicks)
-    	0
-    )	
+    (calculateIntervalBetweenTicks)
+    0
+  )	
 )
 
 (defn playLoop
 	[]
 	(if (get @app-state :osc)
-    	(.disconnect (get @app-state :osc))
+    (.disconnect (get @app-state :osc))
 	)
   (def newOsc (.createOscillator ctx))
   (set! (.-value (.-frequency newOsc)) 400)
@@ -72,13 +70,13 @@
 	(.stop osc (+ currTime (whenToPlay) DURATION_OF_TICK_IN_SECONDS))
 )
 
-(defn startCounting
+(defn startTicking
 	[]
 	(playLoop)
 	(setCurrentlyTicking)
 )
 
-(defn stopCounting
+(defn stopTicking
 	[]
  	(set! (.-onended osc) nil)
 	(.stop (get @app-state :osc))
@@ -89,8 +87,8 @@
 (defn playStopButtonClickHandler
  	[]
   (if (isCurrentlyTicking)
-    (stopCounting)
-    (startCounting)
+    (stopTicking)
+    (startTicking)
   )
 )
 
@@ -145,10 +143,10 @@
           )
 			(dom/div #js {:className "row"} 
      			(dom/button 
-           			#js {:onClick inCreaseTempoButtonClickHandler :className "change-tempo tempo-increase"} 
+           			#js {:onClick inCreaseTempoButtonClickHandler :className "change-tempo change-tempo-tempo-increase"} 
           		)
 	        	(dom/button 
-           			#js {:onClick decreaseTempoButtonClickHandler :className "change-tempo tempo-decrease"} 
+           			#js {:onClick decreaseTempoButtonClickHandler :className "change-tempo change-tempo-tempo-decrease"} 
           		)
           	) 
 	        (dom/div #js {:className "row"} 
