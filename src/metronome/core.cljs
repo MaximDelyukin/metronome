@@ -5,7 +5,11 @@
 
 (enable-console-print!)
 
-(def ctx (js/AudioContext.))
+(def ctx (if js/AudioContext
+           (js/AudioContext.)
+           (js/webkitAudioContext.)
+         )
+)
 
 (def DEFAULT_TEMPO 90)
 (def MAX_TEMPO 250)
@@ -22,7 +26,7 @@
 	(swap! app-state assoc :tempo (- (get @app-state :tempo) 1)))
 
 (def DURATION_OF_TICK_IN_SECONDS .025)
-(def SECONDS_IN_MINUTE 60)
+(def SECONDS_IN_MINUTE 90)
 
 (defn calculateIntervalBetweenTicks
 	[]
@@ -48,7 +52,7 @@
 	[]
  	(if (isCurrentlyTicking)
     	(calculateIntervalBetweenTicks)
-    	0;for some reason firefox chunks the start of the sound if there is no delay
+    	0
     )	
 )
 
@@ -57,11 +61,13 @@
 	(if (get @app-state :osc)
     	(.disconnect (get @app-state :osc))
 	)
-	(swap! app-state assoc :osc (.createOscillator ctx))
+  (def newOsc (.createOscillator ctx))
+  (set! (.-value (.-frequency newOsc)) 400)
+	(swap! app-state assoc :osc newOsc)
 	(def osc (get @app-state :osc))
 	(.connect osc (.-destination ctx))
  	(def currTime (.-currentTime ctx))
-  	(set! (.-onended osc) playLoop)
+  (set! (.-onended osc) playLoop)
 	(.start osc (+ currTime (whenToPlay)))
 	(.stop osc (+ currTime (whenToPlay) DURATION_OF_TICK_IN_SECONDS))
 )
@@ -121,7 +127,6 @@
 (defn onInputHandler
   [e]
   (def value (.-value (.-target (.-nativeEvent e))))
-  (.log js/console value)
   (if (and (< MIN_TEMPO value) (> MAX_TEMPO value))
     (swap! app-state assoc :tempo value)
     (if (< MIN_TEMPO value)
@@ -140,21 +145,22 @@
           )
 			(dom/div #js {:className "row"} 
      			(dom/button 
-           			#js {:onClick inCreaseTempoButtonClickHandler} 
-	        		"+"
+           			#js {:onClick inCreaseTempoButtonClickHandler :className "change-tempo tempo-increase"} 
           		)
 	        	(dom/button 
-           			#js {:onClick decreaseTempoButtonClickHandler} 
-	        		"-"
+           			#js {:onClick decreaseTempoButtonClickHandler :className "change-tempo tempo-decrease"} 
           		)
           	) 
 	        (dom/div #js {:className "row"} 
 	        	(dom/button 
-            		#js {:onClick playStopButtonClickHandler}
-              		(if (isCurrentlyTicking)
-                  		"Stop"
-                    	"Play") 
-            	)
+            	#js {
+                  :onClick playStopButtonClickHandler 
+                  :className (if (isCurrentlyTicking) 
+                               "change-state ticking" 
+                               "change-state not-ticking"
+                             )
+                  } 
+            )
 	        )
     	)
     )
