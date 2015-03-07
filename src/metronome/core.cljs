@@ -114,7 +114,7 @@
   mouseWheelHandler
   [e]
   (def tempo (get @app-state :tempo))
-  (if (> 0 (.-wheelDelta (.-nativeEvent e)))
+  (if (< 0 (.-deltaY e))
     (if (< MIN_TEMPO tempo)
       (decreaseTempo)
     )
