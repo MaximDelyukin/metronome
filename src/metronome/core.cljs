@@ -10,10 +10,14 @@
          )
 )
 
-(def DEFAULT_TEMPO 90)
+(def DEFAULT_TEMPO 180)
 (def MAX_TEMPO 250)
 (def MIN_TEMPO 1)
-(def app-state (atom {:tempo DEFAULT_TEMPO :osc nil :isCurrentlyTicking false}))
+(def app-state (atom {:tempo DEFAULT_TEMPO 
+                      :osc nil 
+                      :isCurrentlyTicking false 
+                      :counter 0 
+                      :accentBarStart true}))
 
 (defn increaseTempo 
  	[]
@@ -54,13 +58,21 @@
   )	
 )
 
+(defn accentBarStart 
+  []
+  (get @app-state :accentBarStart)
+)
+
 (defn playLoop
 	[]
 	(if (get @app-state :osc)
     (.disconnect (get @app-state :osc))
 	)
   (def newOsc (.createOscillator ctx))
-  (set! (.-value (.-frequency newOsc)) 400)
+  (def oldCounter (get @app-state :counter))
+  (def isFirstNoteOfTheBar (or (= oldCounter 0) (= (mod oldCounter 4) 0)))
+  (set! (.-value (.-frequency newOsc)) (if (and isFirstNoteOfTheBar (accentBarStart)) 700 400))
+  (swap! app-state assoc :counter (+ 1 oldCounter))
 	(swap! app-state assoc :osc newOsc)
 	(def osc (get @app-state :osc))
 	(.connect osc (.-destination ctx))
@@ -76,12 +88,18 @@
 	(setCurrentlyTicking)
 )
 
+(defn resetCounter
+  []
+  (swap! app-state assoc :counter 0)
+)
+
 (defn stopTicking
 	[]
  	(set! (.-onended osc) nil)
 	(.stop (get @app-state :osc))
 	(.disconnect (get @app-state :osc))
 	(setCurrentlyNotTicking)
+  (resetCounter)
 )
 
 (defn playStopButtonClickHandler
@@ -134,6 +152,12 @@
   )
 )
 
+(defn toggleAccentBarStart
+  [e]
+  (swap! app-state assoc :accentBarStart (not (accentBarStart)))
+  (set! (.-checked (.-target e)) (not (.-checked (.-target e))))
+)
+
 (om/root
   (fn [app owner]
     (om/component
@@ -160,6 +184,13 @@
                   } 
             )
 	        )
+          (dom/label
+            nil
+            "Accent bar start "
+            (dom/input
+              #js {:type "checkbox" :onChange toggleAccentBarStart :checked (:accentBarStart app)}
+            )  
+          )
     	)
     )
   )
