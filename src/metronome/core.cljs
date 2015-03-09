@@ -10,7 +10,7 @@
          )
 )
 
-(def DEFAULT_TEMPO 180)
+(def DEFAULT_TEMPO 96)
 (def MAX_TEMPO 250)
 (def MIN_TEMPO 1)
 (def app-state (atom {:tempo DEFAULT_TEMPO 
@@ -184,12 +184,14 @@
                   } 
             )
 	        )
-          (dom/label
-            nil
-            "Accent bar start "
-            (dom/input
-              #js {:type "checkbox" :onChange toggleAccentBarStart :checked (:accentBarStart app)}
-            )  
+          (dom/div #js {:className "row"} 
+            (dom/label
+              nil
+              "Accent bar start "
+              (dom/input
+                #js {:type "checkbox" :onChange toggleAccentBarStart :checked (:accentBarStart app)}
+              )  
+            )
           )
     	)
     )
