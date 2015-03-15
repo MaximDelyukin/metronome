@@ -18,7 +18,7 @@
                       :isCurrentlyTicking false 
                       :counter 0 
                       :accentBarStart true
-                      :subDivision 16}))
+                      :subDivision 4}))
 
 (defn increaseTempo 
  	[]
@@ -172,15 +172,15 @@
                   }
               (dom/option
                 #js {:value 4}
-                "𝅘𝅥"
+                "\u2669"
               )
               (dom/option
                 #js {:value 8}
-                "𝅘𝅥𝅮"
+                "\uD834\uDD60"
               )
               (dom/option
                 #js {:value 16}
-                "𝅘𝅥𝅯"
+                "\uD834\uDD61"
               )
             )
           )    
