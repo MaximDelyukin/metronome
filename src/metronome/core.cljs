@@ -17,7 +17,8 @@
                       :osc nil 
                       :isCurrentlyTicking false 
                       :counter 0 
-                      :accentBarStart true}))
+                      :accentBarStart true
+                      :subDivision 16}))
 
 (defn increaseTempo 
  	[]
@@ -32,7 +33,7 @@
 (def SECONDS_IN_MINUTE 60)
 (defn calculateIntervalBetweenTicks
   []
-	(- (/ SECONDS_IN_MINUTE (get @app-state :tempo)) DURATION_OF_TICK_IN_SECONDS)
+	(- (/ SECONDS_IN_MINUTE (* (get @app-state :tempo) (/ (get @app-state :subDivision) 4))) DURATION_OF_TICK_IN_SECONDS)
 )
 
 (defn isCurrentlyTicking
@@ -70,8 +71,8 @@
 	)
   (def newOsc (.createOscillator ctx))
   (def oldCounter (get @app-state :counter))
-  (def isFirstNoteOfTheBar (or (= oldCounter 0) (= (mod oldCounter 4) 0)))
-  (set! (.-value (.-frequency newOsc)) (if (and isFirstNoteOfTheBar (accentBarStart)) 700 400))
+  (def isFirstNoteOfTheBar (or (= oldCounter 0) (= (mod oldCounter (get @app-state :subDivision)) 0)))
+  (set! (.-value (.-frequency newOsc)) (if (and isFirstNoteOfTheBar (accentBarStart)) 700 500))
   (swap! app-state assoc :counter (+ 1 oldCounter))
 	(swap! app-state assoc :osc newOsc)
 	(def osc (get @app-state :osc))
@@ -111,32 +112,12 @@
 )
 
 (defn
-	inCreaseTempoButtonClickHandler 
-	[]
-  (if (> MAX_TEMPO (get @app-state :tempo))
-    (increaseTempo)
-  )
-)
-
-(defn
- 	decreaseTempoButtonClickHandler
-  []
-  (if (< MIN_TEMPO (get @app-state :tempo))
-    (decreaseTempo)
-  )
-)
-
-(defn
   mouseWheelHandler
   [e]
   (def tempo (get @app-state :tempo))
   (if (< 0 (.-deltaY e))
-    (if (< MIN_TEMPO tempo)
-      (decreaseTempo)
-    )
-    (if (> MAX_TEMPO tempo)
-      (increaseTempo)
-    )
+    (decreaseTempo)
+    (increaseTempo)
   )
 )
 
@@ -152,27 +133,72 @@
   )
 )
 
+(defn changeHandler
+  [e]
+  (swap! app-state assoc :tempo (.-value (.-target e)))
+)
+
 (defn toggleAccentBarStart
   [e]
   (swap! app-state assoc :accentBarStart (not (accentBarStart)))
   (set! (.-checked (.-target e)) (not (.-checked (.-target e))))
 )
 
+(defn subDivisionChangeHandler
+  [e]
+  (swap! app-state assoc :subDivision (js/parseInt (.-value (.-target e))))
+)
+
 (om/root
   (fn [app owner]
     (om/component
-    	(dom/div #js {:className "main" :onWheel mouseWheelHandler}
+    	(dom/div #js {:className "main"}
+          (dom/div #js {:className "row"} 
+            (dom/input
+              #js {
+                    :type "checkbox" 
+                    :onChange toggleAccentBarStart 
+                    :checked (:accentBarStart app)
+                    :className "accent-bar-start"
+                    :title "Accent bar start"
+                  }
+            )
+            (dom/select
+              #js {
+                    :onChange subDivisionChangeHandler 
+                    :value (:subDivision app) 
+                    :className "subdivision"
+                    :title "Subdivision"
+                  }
+              (dom/option
+                #js {:value 4}
+                "𝅘𝅥"
+              )
+              (dom/option
+                #js {:value 8}
+                "𝅘𝅥𝅮"
+              )
+              (dom/option
+                #js {:value 16}
+                "𝅘𝅥𝅯"
+              )
+            )
+          )    
         	(dom/div #js {:className "row"} 
             (dom/input #js {:value (:tempo app) :type "text" :className "tempo" :onInput onInputHandler})
           )
-			(dom/div #js {:className "row"} 
-     			(dom/button 
-           			#js {:onClick inCreaseTempoButtonClickHandler :className "change-tempo change-tempo-tempo-increase"} 
-          		)
-	        	(dom/button 
-           			#js {:onClick decreaseTempoButtonClickHandler :className "change-tempo change-tempo-tempo-decrease"} 
-          		)
-          	) 
+          (dom/div #js {:className "row"} 
+            (dom/input 
+              #js {
+                    :type "range"
+                    :min 1
+                    :max 250
+                    :value (:tempo app)
+                    :onChange changeHandler
+                    :onWheel mouseWheelHandler
+                  } 
+            )
+          )   
 	        (dom/div #js {:className "row"} 
 	        	(dom/button 
             	#js {
@@ -182,17 +208,8 @@
                                "change-state not-ticking"
                              )
                   } 
-            )
+            )  
 	        )
-          (dom/div #js {:className "row"} 
-            (dom/label
-              nil
-              "Accent bar start "
-              (dom/input
-                #js {:type "checkbox" :onChange toggleAccentBarStart :checked (:accentBarStart app)}
-              )  
-            )
-          )
     	)
     )
   )
