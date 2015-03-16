@@ -176,11 +176,11 @@
               )
               (dom/option
                 #js {:value 8}
-                "\uD834\uDD60"
+                "\u266A"
               )
               (dom/option
                 #js {:value 16}
-                "\uD834\uDD61"
+                "\u266C"
               )
             )
           )    
