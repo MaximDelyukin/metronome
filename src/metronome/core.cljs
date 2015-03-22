@@ -18,16 +18,17 @@
                       :isCurrentlyTicking false 
                       :counter 0 
                       :accentBarStart true
-                      :subDivision 4}))
+                      :subDivision 4
+                      :timeout nil}))
 
 (defn increaseTempo 
   []
-  (swap! app-state assoc :tempo (+ 1 (get @app-state :tempo)))
+  (swap! app-state assoc :tempo (inc (get @app-state :tempo)))
 )
 
 (defn decreaseTempo
 	[]
-	(swap! app-state assoc :tempo (- (get @app-state :tempo) 1))
+	(swap! app-state assoc :tempo (dec (get @app-state :tempo)))
 )
 
 (def DURATION_OF_TICK_IN_SECONDS .025)
@@ -65,16 +66,22 @@
   (get @app-state :accentBarStart)
 )
 
+(defn setTempo
+  [value]
+  (swap! app-state assoc :tempo value)  
+)
+
 (defn playLoop
 	[]
-	(if (get @app-state :osc)
-    (.disconnect (get @app-state :osc))
+  (def oldOsc (get @app-state :osc))
+	(if oldOsc
+    (.disconnect oldOsc)
 	)
-  (def newOsc (.createOscillator ctx))
   (def oldCounter (get @app-state :counter))
   (def isFirstNoteOfTheBar (or (= oldCounter 0) (= (mod oldCounter (get @app-state :subDivision)) 0)))
+  (def newOsc (.createOscillator ctx))
   (set! (.-value (.-frequency newOsc)) (if (and isFirstNoteOfTheBar (accentBarStart)) 800 1000))
-  (swap! app-state assoc :osc newOsc :counter (+ 1 oldCounter))
+  (swap! app-state assoc :osc newOsc :counter (inc oldCounter))
 	(def osc (get @app-state :osc))
 	(.connect osc (.-destination ctx))
  	(def currTime (.-currentTime ctx))
@@ -99,15 +106,34 @@
  	(set! (.-onended osc) nil)
 	(.stop (get @app-state :osc))
 	(.disconnect (get @app-state :osc))
-	(setCurrentlyNotTicking)
-  (resetCounter)
 )
 
 (defn playStopButtonClickHandler
  	[]
   (if (isCurrentlyTicking)
-    (stopTicking)
+    (do
+      (setCurrentlyNotTicking)
+      (stopTicking)
+      (resetCounter)
+    )
     (startTicking)
+  )
+)
+
+(defn scheduleNext
+  []
+  (do
+    (resetCounter)
+    (js/clearTimeout (get @app-state :timeout))
+    (stopTicking)
+    (swap! app-state assoc :timeout (js/setTimeout 
+        (fn 
+          []
+          (setCurrentlyNotTicking)
+          (startTicking)
+        ) 
+        400)
+    )
   )
 )
 
@@ -119,6 +145,9 @@
   )
   (if (and (> 0 (.-deltaY e)) (> MAX_TEMPO (get @app-state :tempo)))
     (increaseTempo)
+  )
+  (if (isCurrentlyTicking)
+    (scheduleNext) 
   )
 )
 
@@ -137,6 +166,9 @@
 (defn changeHandler
   [e]
   (swap! app-state assoc :tempo (js/parseInt (.-value (.-target e))))
+  (if (isCurrentlyTicking)
+    (scheduleNext) 
+  )
 )
 
 (defn toggleAccentBarStart
