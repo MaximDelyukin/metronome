@@ -21,13 +21,14 @@
                       :subDivision 4}))
 
 (defn increaseTempo 
- 	[]
-	(swap! app-state assoc :tempo (+ 1 (get @app-state :tempo)))
+  []
+  (swap! app-state assoc :tempo (+ 1 (get @app-state :tempo)))
 )
 
 (defn decreaseTempo
 	[]
-	(swap! app-state assoc :tempo (- (get @app-state :tempo) 1)))
+	(swap! app-state assoc :tempo (- (get @app-state :tempo) 1))
+)
 
 (def DURATION_OF_TICK_IN_SECONDS .025)
 (def SECONDS_IN_MINUTE 60)
@@ -72,9 +73,8 @@
   (def newOsc (.createOscillator ctx))
   (def oldCounter (get @app-state :counter))
   (def isFirstNoteOfTheBar (or (= oldCounter 0) (= (mod oldCounter (get @app-state :subDivision)) 0)))
-  (set! (.-value (.-frequency newOsc)) (if (and isFirstNoteOfTheBar (accentBarStart)) 700 500))
-  (swap! app-state assoc :counter (+ 1 oldCounter))
-	(swap! app-state assoc :osc newOsc)
+  (set! (.-value (.-frequency newOsc)) (if (and isFirstNoteOfTheBar (accentBarStart)) 800 1000))
+  (swap! app-state assoc :osc newOsc :counter (+ 1 oldCounter))
 	(def osc (get @app-state :osc))
 	(.connect osc (.-destination ctx))
  	(def currTime (.-currentTime ctx))
@@ -86,7 +86,7 @@
 (defn startTicking
 	[]
 	(playLoop)
-	(setCurrentlyTicking)
+  (setCurrentlyTicking)
 )
 
 (defn resetCounter
@@ -114,9 +114,10 @@
 (defn
   mouseWheelHandler
   [e]
-  (def tempo (get @app-state :tempo))
-  (if (< 0 (.-deltaY e))
+  (if (and (< 0 (.-deltaY e)) (< MIN_TEMPO (get @app-state :tempo)))
     (decreaseTempo)
+  )
+  (if (and (> 0 (.-deltaY e)) (> MAX_TEMPO (get @app-state :tempo)))
     (increaseTempo)
   )
 )
@@ -135,7 +136,7 @@
 
 (defn changeHandler
   [e]
-  (swap! app-state assoc :tempo (.-value (.-target e)))
+  (swap! app-state assoc :tempo (js/parseInt (.-value (.-target e))))
 )
 
 (defn toggleAccentBarStart
@@ -193,6 +194,7 @@
                     :type "range"
                     :min 1
                     :max 250
+                    :step 1
                     :value (:tempo app)
                     :onChange changeHandler
                     :onWheel mouseWheelHandler
