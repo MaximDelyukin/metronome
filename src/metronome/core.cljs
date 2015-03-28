@@ -186,16 +186,24 @@
   (fn [app owner]
     (om/component
     	(dom/div #js {:className "main"}
-          (dom/div #js {:className "row"} 
-            (dom/input
+          (dom/div #js {:className "row"}
+            (dom/label
               #js {
-                    :type "checkbox" 
-                    :onChange toggleAccentBarStart 
-                    :checked (:accentBarStart app)
-                    :className "accent-bar-start"
-                    :title "Accent bar start"
+                    :className "accent-bar-start" 
                   }
-            )
+              (dom/input
+                #js {
+                      :type "checkbox" 
+                      :onChange toggleAccentBarStart 
+                      :checked (:accentBarStart app)
+                      :title "Accent bar start"
+                    }
+              )
+              (dom/span
+                nil
+                "!" 
+              )
+            )          
             (dom/select
               #js {
                     :onChange subDivisionChangeHandler 
